@@ -39,6 +39,7 @@ public class Issue implements Identifiable {
     private String description;
     private Date createdOn;
     private Date updatedOn;
+    private Date closedOn;
     private Integer statusId;
     private String statusName;
     private Version targetVersion;
@@ -207,7 +208,15 @@ public class Issue implements Identifiable {
         return updatedOn;
     }
 
-    public void setUpdatedOn(Date updatedOn) {
+	 public Date getClosedOn() {
+	     return closedOn;
+	 }
+
+	 public void setClosedOn(Date closedOn) {
+	     this.closedOn = closedOn;
+	 }
+
+	public void setUpdatedOn(Date updatedOn) {
         this.updatedOn = updatedOn;
     }
 
