@@ -48,8 +48,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.AbstractHttpEntity;
-import org.apache.http.entity.InputStreamEntity;
+import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONException;
@@ -58,7 +57,9 @@ import org.json.JSONWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.io.IOException;
 import java.io.StringWriter;
 import java.net.URI;
 import java.nio.charset.UnsupportedCharsetException;
@@ -373,7 +374,14 @@ public final class Transport {
 	public String upload(InputStream content) throws RedmineException {
 		final URI uploadURI = getURIConfigurator().getUploadURI();
 		final HttpPost request = new HttpPost(uploadURI);
-		final AbstractHttpEntity entity = new InputStreamEntity(content, -1);
+		
+		/* 
+		 * For fulfillment nginx content-length must set.
+		 * https://github.com/taskadapter/redmine-java-api/issues/233
+		 * http://serverfault.com/questions/164220/is-there-a-way-to-avoid-nginx-411-content-length-required-errors 
+		 */
+		
+		final ByteArrayEntity entity = new ByteArrayEntity(fromInputStream(content));
 		/* Content type required by a Redmine */
 		entity.setContentType("application/octet-stream");
 		request.setEntity(entity);
@@ -381,7 +389,18 @@ public final class Transport {
 		final String result = send(request);
 		return parseResponse(result, "upload", input -> JsonInput.getStringNotNull(input, "token"));
 	}
-
+    
+	private byte[] fromInputStream(InputStream is) {
+        try (ByteArrayOutputStream os = new ByteArrayOutputStream();) {
+            byte[] buffer = new byte[0xFFFF];
+            for (int len; (len = is.read(buffer)) != -1;)
+                os.write(buffer, 0, len);
+            os.flush();
+            return os.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 	/**
 	 * @param classs
 	 *            target class
