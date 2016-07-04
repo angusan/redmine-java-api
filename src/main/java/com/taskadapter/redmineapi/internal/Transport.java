@@ -374,6 +374,13 @@ public final class Transport {
 	public String upload(InputStream content) throws RedmineException {
 		final URI uploadURI = getURIConfigurator().getUploadURI();
 		final HttpPost request = new HttpPost(uploadURI);
+		
+		/* 
+		 * For fulfillment nginx content-length must set.
+		 * https://github.com/taskadapter/redmine-java-api/issues/233
+		 * http://serverfault.com/questions/164220/is-there-a-way-to-avoid-nginx-411-content-length-required-errors 
+		 */
+		
 		final ByteArrayEntity entity = new ByteArrayEntity(fromInputStream(content));
 		/* Content type required by a Redmine */
 		entity.setContentType("application/octet-stream");
